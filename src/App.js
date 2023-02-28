@@ -1,29 +1,54 @@
-import { useReducer } from "react";
+import { useReducer, useState } from "react";
 import "./styles.css";
+import Todo from "./Todo";
+export const ACTIONS = {
+  ADD_TODO: "ADD-TODO",
+  MARK_COMPLETE: "MARK-COMPLETE",
+  DELETE_TODO: "DELETE-DELETE",
+};
 
-function reducer(state, action) {
+function reducer(todos, action) {
   switch (action.type) {
-    case "increment":
-      return { count: state.count + 1 };
-    case "decrement":
-      return { count: state.count - 1 };
+    case ACTIONS.ADD_TODO:
+      return [...todos, newTodo(action.payload.name)];
+    case ACTIONS.MARK_COMPLETE:
+      return todos.map((todo) => {
+        if (todo.id === action.payload.id) {
+          return { ...todo, complete: !todo.complete };
+        }
+        return todo;
+      });
+    case ACTIONS.DELETE_TODO:
+      return todos.filter((todo) => todo.id !== action.payload.id);
     default:
-      return state;
+      return todos;
   }
 }
+
+function newTodo(name) {
+  return { id: Date.now(), name: name, complete: false };
+}
 export default function App() {
-  const [state, dispatch] = useReducer(reducer, { count: 0 });
-  function increment() {
-    dispatch({ type: "increment" });
-  }
-  function decrement() {
-    dispatch({ type: "decrement" });
+  const [todos, dispatch] = useReducer(reducer, []);
+  const [name, setName] = useState("");
+
+  function handleSubmit(e) {
+    e.preventDefault();
+    dispatch({ type: ACTIONS.ADD_TODO, payload: { name: name } });
+    setName("");
   }
   return (
     <div className="App">
-      <button onClick={increment}>+</button>
-      {state.count}
-      <button onClick={decrement}>-</button>
+      <form onSubmit={handleSubmit}>
+        <input
+          type="text"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+        />
+      </form>
+      {todos.map((todo) => {
+        return <Todo key={todo.id} todo={todo} dispatch={dispatch} />;
+      })}
     </div>
   );
 }
